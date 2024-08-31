@@ -31,3 +31,8 @@ class OnboardModel(OnboardCreate):
     overview: Optional[dict] = None
     gtm: Optional[dict] = None
     market_opportunity: Optional[dict] = None
+    funding_community: Optional[dict] = None
+
+
+class ChatbotModel(BaseModel):
+    question: str

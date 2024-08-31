@@ -1,8 +1,13 @@
+import time
+import traceback
+
 from py_app_service.database import mongo_instance
 from py_app_service.services import (
     gtm_strategy,
     overview_builder,
     market_expansion_opportunities,
+funding_community,
+update_kbs
 )
 from py_app_service.models import OnboardModel
 import asyncio
@@ -37,6 +42,8 @@ async def prompting_worker():
                             {"_id": document_id}, {"$set": _data}
                         )
 
+                        time.sleep(2.5)
+
                     if not data.market_opportunity:
                         _me = market_expansion_opportunities(
                             data.business_id, data.data
@@ -47,9 +54,23 @@ async def prompting_worker():
                             {"_id": document_id}, {"$set": _data}
                         )
 
+                        time.sleep(2.5)
+
                     if not data.gtm:
                         _gtm = gtm_strategy(data.business_id, data.data)
                         _data["gtm"] = _gtm
+                        await mongo_tabel.update_one({"_id": document_id}, {"$set": _data})
+
+                        time.sleep(2.5)
+
+                    if not data.funding_community:
+                        _fc = funding_community(data.business_id, data.data)
+                        _data["funding_community"] = _fc
+                        time.sleep(2.5)
+
+
+                    # running KBS
+                    update_kbs(data.business_id, data.data)
 
                     # Mark the document as successfully processed
                     _data["success"] = True
@@ -71,6 +92,7 @@ async def prompting_worker():
                         {"_id": document_id},
                         {"$set": {"failed": True, "error_message": str(e)}},
                     )
+                    traceback.print_exc()
 
             else:
                 # No data found, sleep for 15 seconds before checking again

@@ -2,7 +2,7 @@ from http import HTTPStatus
 import dashscope
 import time
 
-api_key = "sk-b822fa1ff97741f7ac290063f3433700"
+api_key = "sk-b902fd83364046b0b3bc9f49a7bd754c"
 dashscope.base_http_api_url = "https://dashscope-intl.aliyuncs.com/api/v1"
 dashscope.api_key = api_key
 
@@ -596,4 +596,91 @@ def gtm_strategy(session_id, payload_form):
     }
     # return output
     time.sleep(2)
+    return payload_output
+
+# PROMPT TEMPLATE: for generating funding calculation
+system_prompt_fnc_1st="""
+Diketahui bahwa user sedang mengembangkan bisnis sebagai berikut.
+### Bisnis: <<nama usaha>>
+### Produk: <<jenis_produk>>
+
+Bisnisnya dia beroperasi di daerah  <<lokasi_usaha>>.
+
+Nah, sekarang, dia hendak melakukan ekspansi dari daerahnya dia hingga ke perrkotaan dan juga ke skala intenasional. 
+Coba, menurutmu, kira-kira dia harus dapet funding seberapa besar. 
+
+Tolong beri respon nominal rupiahnya saja dalam miliyar rupiah.
+
+Contoh Jawaban #1:
+IDR 5,45 M
+"""
+user_prompt_fnc = """
+### Jawab: """
+
+# PROMPT TEMPLATE: for generating how_to_get_fund
+system_prompt_fnc_2nd="""
+Diketahui bahwa user sedang mengembangkan bisnis sebagai berikut.
+### Bisnis: <<nama usaha>>
+### Produk: <<jenis_produk>>
+
+Bisnisnya dia beroperasi di daerah  <<lokasi_usaha>>.
+
+Nah, sekarang, dia hendak melakukan ekspansi dari daerahnya dia hingga ke perkotaan dan juga ke skala intenasional. 
+Coba, menurutmu, kira kira di daerah terdekatnya, di desanya itu, dimulai dari titik daerahnya, bagaimana caranya dia dapet funding.
+
+Kamu harus batasi responsmu dalam maksimal 3 kalimat saja.
+Ketika kamu jawab ke user, refer user pakai kata 'kamu' saja. 
+"""
+
+# PROMPT TEMPLATE: for generating how_to_get_fund
+system_prompt_fnc_3rd = """
+Diketahui bahwa user sedang mengembangkan bisnis sebagai berikut.
+### Bisnis: <<nama usaha>>
+### Produk: <<jenis_produk>>
+
+Bisnisnya dia beroperasi di daerah  <<lokasi_usaha>>.
+
+Nah, sekarang, dia hendak melakukan ekspansi dari daerahnya dia hingga ke perkotaan dan juga ke skala intenasional. 
+Tolong beri tahu, komunitas komunitas apa saja di daerah terdekatnya untuk membantu dia berkembang sebagai networking, mulai dari daerah lokasi usahanya. 
+
+Kamu harus batasi responsmu dalam maksimal 3 kalimat saja.
+Ketika kamu jawab ke user, refer user pakai kata 'kamu' saja. 
+"""
+
+
+def funding_community(business_id, payload_form):
+    # Generate funding
+    system_prompt_fnc_1st_x = PromptReplacer(system_prompt_fnc_1st).replace_entities({
+        "<<nama_usaha>>": payload_form["informasi_bisnis_dasar"]["nama_usaha"],
+        "<<jenis_produk>>": payload_form["informasi_bisnis_dasar"]["jenis_produk"],
+        "<<lokasi_usaha>>": payload_form["informasi_bisnis_dasar"]["lokasi_usaha"],
+    })
+    funding = generate_completion(system_prompt_fnc_1st_x, user_prompt_fnc)
+
+    # Generate how to get fund
+    system_prompt_fnc_2nd_x = PromptReplacer(system_prompt_fnc_2nd).replace_entities({
+        "<<nama_usaha>>": payload_form["informasi_bisnis_dasar"]["nama_usaha"],
+        "<<jenis_produk>>": payload_form["informasi_bisnis_dasar"]["jenis_produk"],
+        "<<lokasi_usaha>>": payload_form["informasi_bisnis_dasar"]["lokasi_usaha"],
+    })
+    how_to_get_fund = generate_completion(system_prompt_fnc_2nd_x, user_prompt_fnc)
+
+    # Generate community
+    system_prompt_fnc_3rd_x = PromptReplacer(system_prompt_fnc_3rd).replace_entities({
+        "<<nama_usaha>>": payload_form["informasi_bisnis_dasar"]["nama_usaha"],
+        "<<jenis_produk>>": payload_form["informasi_bisnis_dasar"]["jenis_produk"],
+        "<<lokasi_usaha>>": payload_form["informasi_bisnis_dasar"]["lokasi_usaha"],
+    })
+    community = generate_completion(system_prompt_fnc_3rd_x, user_prompt_fnc)
+
+    # generate payload
+    payload_output = {
+        "business_id": business_id,
+        "module": "funding-community",
+        "funding": funding,
+        "how_to_get_fund": how_to_get_fund,
+        "community": community
+    }
+    # return output
+    time.sleep(5)
     return payload_output

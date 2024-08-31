@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException
 from py_app_service.database import mongo_instance
-from py_app_service.models import UserCreate, OnboardCreate
+from py_app_service.models import UserCreate, OnboardCreate, ChatbotModel
 from fastapi.middleware.cors import CORSMiddleware
 from py_app_service.workers import prompting_worker
+from py_app_service.services import chatbot
 import datetime, asyncio
 
 app = FastAPI()
@@ -57,6 +58,18 @@ async def get_onboarding_status(buzz_id: str):
 
     exist_status["_id"] = ""
     return exist_status
+
+@app.post("/chatbot/{buzz_id}")
+async def get_onboarding_status(buzz_id: str, data:ChatbotModel):
+    exist_status = await mongo_instance["business"].find_one({"business_id": buzz_id})
+    if not exist_status:
+        raise HTTPException(status_code=400, detail="Business not registered yet")
+
+    exist_status["_id"] = ""
+
+    p = chatbot(buzz_id, data.question)
+
+    return {"message": p}
 
 
 @app.post("/ignore-this")
