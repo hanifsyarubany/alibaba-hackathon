@@ -1,12 +1,49 @@
 from fastapi import FastAPI, Depends, HTTPException
 from py_app_service.database import mongo_instance
-from py_app_service.models import UserCreate
+from py_app_service.models import UserCreate, OnboardCreate
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers
+)
+
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+@app.post("/onboarding")
+async def onboarding(data: OnboardCreate):
+    existing_user = await mongo_instance["business"].find_one(
+        {"business_id": data.business_id}
+    )
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Business already registered")
+
+    __bus_dict = data.dict()
+    __bus_dict["success"] = None
+    __bus_dict["failed"] = None
+    result = await mongo_instance["business"].insert_one(__bus_dict)
+    __bus_dict["_id"] = str(result.inserted_id)
+    return __bus_dict
+
+
+@app.get("/onboarding/{buzz_id}")
+async def get_onboarding_status(buzz_id: str):
+    exist_status = await mongo_instance["business"].find_one({"business_id": buzz_id})
+    print("exs: ",exist_status)
+    if not exist_status:
+        raise HTTPException(status_code=400, detail="Business not registered yet")
+
+    exist_status["_id"] = ""
+    return exist_status
+
 
 @app.post("/ignore-this")
 async def create_new_user(user: UserCreate):
