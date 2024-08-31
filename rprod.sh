@@ -17,31 +17,38 @@ case "$1" in
     echo "Starting FastAPI service only..."
     docker compose down
     # docker compose pull
-    docker compose up -d --build --remove-orphans fastapi_app
+    docker-compose build 
+    docker compose up -d --remove-orphans fastapi_app
     ;;
   
   service+mongo)
     echo "Starting FastAPI service and MongoDB..."
     docker compose down
     # docker compose pull
-    docker compose up -d --build --remove-orphans mongodb
-    docker compose up -d --build --remove-orphans fastapi_app
+    docker compose up -d --remove-orphans mongodb
+
+    docker-compose build 
+    docker compose up -d --remove-orphans fastapi_app
     ;;
   
   service+mongo+redis)
     echo "Starting FastAPI service, MongoDB, and Redis..."
     docker compose down
     # docker compose pull
-    docker compose up -d --build --remove-orphans mongodb redis
-    docker compose up -d --build --remove-orphans fastapi_app
+    docker compose up -d --remove-orphans mongodb redis
+
+    docker-compose build 
+    docker compose up -d --remove-orphans fastapi_app
     ;;
   
   all)
     echo "Starting all services..."
     docker compose down
     # docker compose pull
-    docker compose up -d --build --remove-orphans mongodb redis rabbitmq vectordb
-    docker compose up -d --build --remove-orphans fastapi_app
+    docker compose up -d --remove-orphans mongodb redis rabbitmq vectordb
+
+    docker-compose build 
+    docker compose up -d --remove-orphans fastapi_app
     ;;
   
   *)
