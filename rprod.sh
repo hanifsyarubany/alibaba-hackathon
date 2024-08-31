@@ -16,12 +16,14 @@ case "$1" in
   service)
     echo "Starting FastAPI service only..."
     docker compose down
+    # docker compose pull
     docker compose up -d --build --remove-orphans fastapi_app
     ;;
   
   service+mongo)
     echo "Starting FastAPI service and MongoDB..."
     docker compose down
+    # docker compose pull
     docker compose up -d --build --remove-orphans mongodb
     docker compose up -d --build --remove-orphans fastapi_app
     ;;
@@ -29,6 +31,7 @@ case "$1" in
   service+mongo+redis)
     echo "Starting FastAPI service, MongoDB, and Redis..."
     docker compose down
+    # docker compose pull
     docker compose up -d --build --remove-orphans mongodb redis
     docker compose up -d --build --remove-orphans fastapi_app
     ;;
@@ -36,6 +39,7 @@ case "$1" in
   all)
     echo "Starting all services..."
     docker compose down
+    # docker compose pull
     docker compose up -d --build --remove-orphans mongodb redis rabbitmq vectordb
     docker compose up -d --build --remove-orphans fastapi_app
     ;;

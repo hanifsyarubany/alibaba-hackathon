@@ -24,6 +24,7 @@ RUN poetry config virtualenvs.create false \
 
 # Copy the FastAPI project files to the working directory
 COPY . /app
+COPY ./py_app_service/config.docker.py /app/py_app_service/config.py
 
 # Expose the application port
 EXPOSE 8000
