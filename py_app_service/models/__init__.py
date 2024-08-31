@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Union
 
 
 class UserBase(BaseModel):
@@ -22,3 +22,12 @@ class UserResponse(UserBase):
 class OnboardCreate(BaseModel):
     business_id: str
     data: dict
+
+
+class OnboardModel(OnboardCreate):
+    created_at: Union[int, float]
+    success: Optional[bool] = None
+    failed: Optional[bool] = None
+    overview: Optional[dict] = None
+    gtm: Optional[dict] = None
+    market_opportunity: Optional[dict] = None

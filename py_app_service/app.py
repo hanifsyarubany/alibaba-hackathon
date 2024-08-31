@@ -2,6 +2,8 @@ from fastapi import FastAPI, Depends, HTTPException
 from py_app_service.database import mongo_instance
 from py_app_service.models import UserCreate, OnboardCreate
 from fastapi.middleware.cors import CORSMiddleware
+from py_app_service.workers import prompting_worker
+import datetime, asyncio
 
 app = FastAPI()
 app.add_middleware(
@@ -11,6 +13,17 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
     allow_headers=["*"],  # Allows all headers
 )
+
+
+# Background task holder
+worker_task = None
+
+@app.on_event("startup")
+async def worker_runner():
+    global worker_task  # Ensure the task can be accessed globally if needed
+    # Start the prompting_worker in the background without blocking FastAPI
+    worker_task = asyncio.create_task(prompting_worker())
+    print("Worker started in the background.")
 
 
 @app.get("/")
@@ -29,6 +42,8 @@ async def onboarding(data: OnboardCreate):
     __bus_dict = data.dict()
     __bus_dict["success"] = None
     __bus_dict["failed"] = None
+    now = datetime.datetime.now()
+    __bus_dict["created_at"] = datetime.datetime.timestamp(now)
     result = await mongo_instance["business"].insert_one(__bus_dict)
     __bus_dict["_id"] = str(result.inserted_id)
     return __bus_dict
@@ -37,7 +52,6 @@ async def onboarding(data: OnboardCreate):
 @app.get("/onboarding/{buzz_id}")
 async def get_onboarding_status(buzz_id: str):
     exist_status = await mongo_instance["business"].find_one({"business_id": buzz_id})
-    print("exs: ",exist_status)
     if not exist_status:
         raise HTTPException(status_code=400, detail="Business not registered yet")
 
