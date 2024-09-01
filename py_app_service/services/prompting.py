@@ -2,7 +2,9 @@ from http import HTTPStatus
 import dashscope
 import time
 
-api_key = "sk-b902fd83364046b0b3bc9f49a7bd754c"
+import py_app_service.config
+
+api_key = py_app_service.config.ALI_AI
 dashscope.base_http_api_url = "https://dashscope-intl.aliyuncs.com/api/v1"
 dashscope.api_key = api_key
 
